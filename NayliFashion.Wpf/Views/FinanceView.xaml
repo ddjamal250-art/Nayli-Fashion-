@@ -1,0 +1,224 @@
+<UserControl x:Class="NayliFashion.Wpf.Views.FinanceView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:vm="clr-namespace:NayliFashion.Wpf.ViewModels"
+             xmlns:conv="clr-namespace:NayliFashion.Wpf.Converters"
+             mc:Ignorable="d" 
+             d:DataContext="{d:DesignInstance Type=vm:FinanceViewModel}"
+             FlowDirection="RightToLeft"
+             Background="{StaticResource BrushBackground}">
+
+    <UserControl.Resources>
+        <conv:CurrencyFormatterConverter x:Key="CurrencyConverter" />
+        <conv:BooleanToVisibilityConverter x:Key="BoolToVis" />
+    </UserControl.Resources>
+
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- بطاقة الوردية الحالية والعمليات المالية -->
+        <Border Grid.Row="0" Background="{StaticResource BrushSurface}" CornerRadius="12" Padding="18" Margin="0,0,0,16" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <Grid Grid.Row="0" Margin="0,0,0,16">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="حالة الوردية الحالية: " Foreground="{StaticResource BrushTextSecondary}" FontSize="15" />
+                        <TextBlock Text="{Binding ActiveShift.ShiftNumber, TargetNullValue='لا توجد وردية مفتوحة'}"
+                                   Foreground="{StaticResource BrushAccentGold}"
+                                   FontSize="16"
+                                   FontWeight="Bold"
+                                   Margin="6,0,0,0" />
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Orientation="Horizontal">
+                        <Button Content="+ فتح وردية جديدة"
+                                Command="{Binding OpenOpenShiftDialogCommand}"
+                                Style="{StaticResource PrimaryButton}"
+                                Margin="0,0,10,0" />
+
+                        <Button Content="إغلاق الوردية والمطابقة [Z-Report]"
+                                Command="{Binding OpenCloseShiftDialogCommand}"
+                                Style="{StaticResource SecondaryButton}"
+                                Margin="0,0,10,0" />
+
+                        <Button Content="+ تسجيل مصروف نثري"
+                                Command="{Binding OpenExpenseDialogCommand}"
+                                Style="{StaticResource SecondaryButton}" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- مؤشرات مبالغ الوردية اللحظية -->
+                <Grid Grid.Row="1">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" Background="{StaticResource BrushCard}" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="العهدة الافتتاحية" Foreground="{StaticResource BrushTextSecondary}" FontSize="11" />
+                            <TextBlock Text="{Binding ActiveShift.OpeningFloatBalanceDzd, Converter={StaticResource CurrencyConverter}}" Foreground="{StaticResource BrushTextPrimary}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" Background="{StaticResource BrushCard}" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="مبيعات الكاش" Foreground="{StaticResource BrushTextSecondary}" FontSize="11" />
+                            <TextBlock Text="{Binding ActiveShift.TotalCashSalesDzd, Converter={StaticResource CurrencyConverter}}" Foreground="{StaticResource BrushSuccess}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" Background="{StaticResource BrushCard}" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="مبيعات بريدي موب" Foreground="{StaticResource BrushTextSecondary}" FontSize="11" />
+                            <TextBlock Text="{Binding ActiveShift.TotalBaridiMobSalesDzd, Converter={StaticResource CurrencyConverter}}" Foreground="{StaticResource BrushAccentGold}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="3" Background="{StaticResource BrushCard}" CornerRadius="8" Padding="12" Margin="0,0,8,0">
+                        <StackPanel>
+                            <TextBlock Text="تحصيلات الكارني" Foreground="{StaticResource BrushTextSecondary}" FontSize="11" />
+                            <TextBlock Text="{Binding ActiveShift.TotalDebtCollectionsDzd, Converter={StaticResource CurrencyConverter}}" Foreground="{StaticResource BrushTextPrimary}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="4" Background="{StaticResource BrushCard}" CornerRadius="8" Padding="12">
+                        <StackPanel>
+                            <TextBlock Text="المصروفات النثرية" Foreground="{StaticResource BrushTextSecondary}" FontSize="11" />
+                            <TextBlock Text="{Binding ActiveShift.TotalExpensesOutDzd, Converter={StaticResource CurrencyConverter}}" Foreground="{StaticResource BrushDanger}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </Grid>
+        </Border>
+
+        <!-- سجل الورديات السابقة وتقارير Z -->
+        <Border Grid.Row="1" Background="{StaticResource BrushSurface}" CornerRadius="12" Padding="16" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Grid.Row="0" Text="أرشيف الورديات السابقة وإغلاقات الصندوق" Foreground="{StaticResource BrushTextPrimary}" FontSize="16" FontWeight="Bold" Margin="0,0,0,12" />
+
+                <DataGrid Grid.Row="1" ItemsSource="{Binding ShiftHistory}">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="رقم الوردية" Binding="{Binding ShiftNumber}" Width="130" />
+                        <DataGridTextColumn Header="الكاشير" Binding="{Binding User.FullName}" Width="*" />
+                        <DataGridTextColumn Header="تاريخ الفتح" Binding="{Binding OpenedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130" />
+                        <DataGridTextColumn Header="تاريخ الإغلاق" Binding="{Binding ClosedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="130" />
+                        <DataGridTextColumn Header="مبيعات الكاش" Binding="{Binding TotalCashSalesDzd, Converter={StaticResource CurrencyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="النقد الفعلي" Binding="{Binding ActualCountedCashDzd, Converter={StaticResource CurrencyConverter}}" Width="110" />
+                        <DataGridTextColumn Header="الفارق" Binding="{Binding CashVarianceDifferenceDzd, Converter={StaticResource CurrencyConverter}}" Width="100" />
+                        <DataGridTextColumn Header="الحالة" Binding="{Binding Status}" Width="100" />
+                    </DataGrid.Columns>
+                </DataGrid>
+            </Grid>
+        </Border>
+
+        <!-- حوار فتح وردية جديدة -->
+        <Grid Grid.RowSpan="2"
+              Background="#B0000000"
+              Visibility="{Binding IsOpenShiftDialogVisible, Converter={StaticResource BoolToVis}}">
+            <Border Background="{StaticResource BrushSurface}"
+                    BorderBrush="{StaticResource BrushAccentGold}"
+                    BorderThickness="1.5"
+                    CornerRadius="16"
+                    Padding="24"
+                    Width="400"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="فتح وردية كاشير جديدة" Foreground="{StaticResource BrushTextPrimary}" FontSize="18" FontWeight="Bold" Margin="0,0,0,14" />
+
+                    <TextBlock Text="العهدة النقدية الافتتاحية بالدرج (دج):" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,6" />
+                    <TextBox Text="{Binding OpeningFloatAmount, UpdateSourceTrigger=PropertyChanged}" FontSize="16" FontWeight="Bold" Height="40" Margin="0,0,0,16" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="إلغاء" Command="{Binding OpenOpenShiftDialogCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0" />
+                        <Button Content="فتح الوردية" Command="{Binding ConfirmOpenShiftCommand}" Style="{StaticResource PrimaryButton}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- حوار إغلاق الوردية والمطابقة المحاسبية Z-Report -->
+        <Grid Grid.RowSpan="2"
+              Background="#B0000000"
+              Visibility="{Binding IsCloseShiftDialogVisible, Converter={StaticResource BoolToVis}}">
+            <Border Background="{StaticResource BrushSurface}"
+                    BorderBrush="{StaticResource BrushAccentGold}"
+                    BorderThickness="1.5"
+                    CornerRadius="16"
+                    Padding="24"
+                    Width="440"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="إغلاق الوردية وطباعة تقرير Z" Foreground="{StaticResource BrushTextPrimary}" FontSize="18" FontWeight="Bold" Margin="0,0,0,14" />
+
+                    <TextBlock Text="قم بعدّ النقود الموجودة في الدرج فعلياً وأدخل المبلغ:" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,6" />
+                    <TextBox Text="{Binding ActualCountedCash, UpdateSourceTrigger=PropertyChanged}" FontSize="20" FontWeight="Bold" Height="44" Foreground="{StaticResource BrushSuccess}" Margin="0,0,0,12" />
+
+                    <TextBlock Text="ملاحظات الإغلاق إن وجدت:" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding ClosingNotes, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,16" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="إلغاء" Command="{Binding OpenCloseShiftDialogCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0" />
+                        <Button Content="إغلاق الصندوق وطباعة Z" Command="{Binding ConfirmCloseShiftCommand}" Style="{StaticResource PrimaryButton}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <!-- حوار تسجيل مصروف نثري جديد -->
+        <Grid Grid.RowSpan="2"
+              Background="#B0000000"
+              Visibility="{Binding IsExpenseDialogVisible, Converter={StaticResource BoolToVis}}">
+            <Border Background="{StaticResource BrushSurface}"
+                    BorderBrush="{StaticResource BrushDanger}"
+                    BorderThickness="1.5"
+                    CornerRadius="16"
+                    Padding="24"
+                    Width="420"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <StackPanel>
+                    <TextBlock Text="تسجيل مصروف نثري من الدرج" Foreground="{StaticResource BrushTextPrimary}" FontSize="18" FontWeight="Bold" Margin="0,0,0,14" />
+
+                    <TextBlock Text="بند المصروف (كهرباء، غسيل مصبغة، ضيافة...):" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding ExpenseCategory, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,10" />
+
+                    <TextBlock Text="المبلغ المنصرف (دج):" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding ExpenseAmount, UpdateSourceTrigger=PropertyChanged}" FontSize="16" FontWeight="Bold" Height="38" Margin="0,0,0,10" />
+
+                    <TextBlock Text="المستلم للمبلغ:" Foreground="{StaticResource BrushTextSecondary}" Margin="0,0,0,4" />
+                    <TextBox Text="{Binding ExpenseBeneficiary, UpdateSourceTrigger=PropertyChanged}" Height="36" Margin="0,0,0,16" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="إلغاء" Command="{Binding OpenExpenseDialogCommand}" Style="{StaticResource SecondaryButton}" Margin="0,0,10,0" />
+                        <Button Content="صرف وخصم من الدرج" Command="{Binding SaveExpenseCommand}" Style="{StaticResource PrimaryButton}" />
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

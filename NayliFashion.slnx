@@ -1,0 +1,7 @@
+﻿<Solution>
+  <Project Path="NayliFashion.Core/NayliFashion.Core.csproj" />
+  <Project Path="NayliFashion.Data/NayliFashion.Data.csproj" />
+  <Project Path="NayliFashion.Services/NayliFashion.Services.csproj" />
+  <Project Path="NayliFashion.Wpf/NayliFashion.Wpf.csproj" />
+  <Project Path="NayliFashion.Tests/NayliFashion.Tests.csproj" />
+</Solution>

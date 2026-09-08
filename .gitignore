@@ -1,0 +1,30 @@
+﻿## Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio cache & user files
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+
+## Test results
+TestResults/
+*.trx
+
+## SQLite databases created at runtime or during testing
+*.db
+*.db-shm
+*.db-wal
+SimDb_*.db
+Backups/
+
+## OS generated files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.BIN/
+.DS_Store

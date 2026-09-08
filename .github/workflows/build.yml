@@ -1,0 +1,30 @@
+﻿name: Nayli Fashion CI & Automated Testing
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build-and-test:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Restore Dependencies
+      run: dotnet restore NayliFashion.slnx
+
+    - name: Build Solution (Release)
+      run: dotnet build NayliFashion.slnx --configuration Release --no-restore
+
+    - name: Run Exhaustive Simulation & Unit Tests
+      run: dotnet test NayliFashion.Tests/NayliFashion.Tests.csproj --configuration Release --no-build --verbosity normal
