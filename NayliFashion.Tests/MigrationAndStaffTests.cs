@@ -322,4 +322,49 @@ public class MigrationAndStaffTests
                 File.Delete(dbFile);
         }
     }
+
+    [Fact]
+    public async Task TestMultiUserSeedAndPinAuthentication()
+    {
+        string testDbName = $"AuthDb_{Guid.NewGuid():N}";
+        string dbFile = $"{testDbName}.db";
+        var factory = new TestDbContextFactory(testDbName);
+
+        using (var initDb = factory.CreateDbContext())
+        {
+            await DatabaseInitializer.InitializeDatabaseAsync(initDb);
+        }
+
+        var authService = new AuthService(factory);
+
+        try
+        {
+            // 1. التحقق من وجود المستخدمين الثلاثة المعتمدين
+            var allUsers = await authService.GetAllUsersAsync();
+            Assert.Contains(allUsers, u => u.Username == "admin" && u.Role == UserRole.SuperAdmin);
+            Assert.Contains(allUsers, u => u.Username == "cashier" && u.Role == UserRole.Cashier);
+            Assert.Contains(allUsers, u => u.Username == "manager" && u.Role == UserRole.StoreManager);
+
+            // 2. تسجيل دخول مدير النظام
+            var adminUser = await authService.LoginAsync("admin", "admin123");
+            Assert.NotNull(adminUser);
+            Assert.Equal("admin", adminUser.Username);
+
+            // 3. تسجيل دخول الكاشير عبر رمز PIN الرقمي 1234
+            var cashierUser = await authService.LoginAsync("cashier", "1234");
+            Assert.NotNull(cashierUser);
+            Assert.Equal("cashier", cashierUser.Username);
+            Assert.Equal(UserRole.Cashier, cashierUser.Role);
+
+            // 4. التحقق من فشل كلمة مرور خاطئة
+            var wrongUser = await authService.LoginAsync("cashier", "9999");
+            Assert.Null(wrongUser);
+        }
+        finally
+        {
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            if (File.Exists(dbFile))
+                File.Delete(dbFile);
+        }
+    }
 }

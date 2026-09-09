@@ -35,7 +35,14 @@ public class BooleanToVisibilityConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        bool b = value is bool flag && flag;
+        bool b = false;
+        if (value is bool flag)
+            b = flag;
+        else if (value is string str)
+            b = !string.IsNullOrWhiteSpace(str);
+        else if (value != null)
+            b = true;
+
         if (parameter is string p && p == "Inverse")
             b = !b;
         return b ? Visibility.Visible : Visibility.Collapsed;
@@ -49,6 +56,8 @@ public class NullToVisibilityConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
         bool isNotNull = value != null;
+        if (value is string s)
+            isNotNull = !string.IsNullOrWhiteSpace(s);
         if (parameter is string p && p == "Inverse")
             isNotNull = !isNotNull;
         return isNotNull ? Visibility.Visible : Visibility.Collapsed;

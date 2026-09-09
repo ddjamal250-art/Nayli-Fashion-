@@ -146,13 +146,20 @@ public partial class App : Application
 
     private void ShowLoginWindow()
     {
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
         var authService = _serviceProvider!.GetRequiredService<IAuthService>();
 
         var loginVm = new LoginViewModel(authService, user =>
         {
-            // عند نجاح تسجيل الدخول، نفتح النافذة الرئيسية
-            _loginWindow?.Close();
+            // عند نجاح تسجيل الدخول، نفتح النافذة الرئيسية أولاً ثم نغلق نافذة الدخول بأمان
             ShowMainWindow();
+            if (_loginWindow != null)
+            {
+                var oldLogin = _loginWindow;
+                _loginWindow = null;
+                oldLogin.Close();
+            }
         });
 
         _loginWindow = new LoginWindow
@@ -160,19 +167,37 @@ public partial class App : Application
             DataContext = loginVm
         };
 
+        _loginWindow.Closed += (s, e) =>
+        {
+            // إذا أغلقت نافذة الدخول يدوياً (الزر X) ولم تكن النافذة الرئيسية معروضة، يتم إنهاء التطبيق
+            if (_mainWindow == null)
+            {
+                Shutdown();
+            }
+        };
+
+        MainWindow = _loginWindow;
         _loginWindow.Show();
+        _ = loginVm.InitializeAsync();
     }
 
     private void ShowMainWindow()
     {
+        ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
         var authService = _serviceProvider!.GetRequiredService<IAuthService>();
         var cashShiftService = _serviceProvider!.GetRequiredService<ICashShiftService>();
 
         var mainVm = new MainViewModel(authService, cashShiftService, _serviceProvider!, () =>
         {
-            // عند تسجيل الخروج
-            _mainWindow?.Close();
+            // عند تسجيل الخروج، نفتح نافذة تسجيل الدخول ثم نغلق النافذة الرئيسية
             ShowLoginWindow();
+            if (_mainWindow != null)
+            {
+                var oldMain = _mainWindow;
+                _mainWindow = null;
+                oldMain.Close();
+            }
         });
 
         _mainWindow = new MainWindow
@@ -180,8 +205,19 @@ public partial class App : Application
             DataContext = mainVm
         };
 
+        MainWindow = _mainWindow;
+
         var toastService = _serviceProvider!.GetRequiredService<IToastNotificationService>();
         _mainWindow.InitializeToastService(toastService);
+
+        _mainWindow.Closed += (s, e) =>
+        {
+            // إذا أغلقت النافذة الرئيسية ولم تكن نافذة تسجيل الدخول معروضة، يتم إنهاء التطبيق
+            if (_loginWindow == null)
+            {
+                Shutdown();
+            }
+        };
 
         _mainWindow.Show();
         _ = mainVm.InitializeAsync();

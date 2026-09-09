@@ -39,7 +39,7 @@ public static class DatabaseInitializer
             await context.SaveChangesAsync();
         }
 
-        // 2. زرع حساب المدير الافتراضي (admin / admin123)
+        // 2. زرع حسابات المستخدمين الافتراضية للتشغيل الفوري واختبار تبديل الموظفين
         if (!await context.Users.AnyAsync(u => u.Username == "admin"))
         {
             CreatePasswordHash("admin123", out string hash, out string salt);
@@ -55,6 +55,42 @@ public static class DatabaseInitializer
             };
 
             await context.Users.AddAsync(adminUser);
+            await context.SaveChangesAsync();
+        }
+
+        if (!await context.Users.AnyAsync(u => u.Username == "cashier"))
+        {
+            CreatePasswordHash("1234", out string hash, out string salt);
+
+            var cashierUser = new User
+            {
+                Username = "cashier",
+                FullName = "كاشير الصندوق (Cashier)",
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                Role = UserRole.Cashier,
+                PhoneNumber = "0611111111"
+            };
+
+            await context.Users.AddAsync(cashierUser);
+            await context.SaveChangesAsync();
+        }
+
+        if (!await context.Users.AnyAsync(u => u.Username == "manager"))
+        {
+            CreatePasswordHash("manager123", out string hash, out string salt);
+
+            var managerUser = new User
+            {
+                Username = "manager",
+                FullName = "مسؤول المحل (Store Manager)",
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                Role = UserRole.StoreManager,
+                PhoneNumber = "0622222222"
+            };
+
+            await context.Users.AddAsync(managerUser);
             await context.SaveChangesAsync();
         }
 
