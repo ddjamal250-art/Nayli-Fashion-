@@ -1,4 +1,4 @@
-﻿name: Nayli Fashion CI & Automated Testing
+﻿name: Nayli Fashion CI & Automated Setup Release
 
 on:
   push:
@@ -6,6 +6,9 @@ on:
   pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build-and-test:
@@ -28,3 +31,37 @@ jobs:
 
     - name: Run Exhaustive Simulation & Unit Tests
       run: dotnet test NayliFashion.Tests/NayliFashion.Tests.csproj --configuration Release --no-build --verbosity normal
+
+    - name: Publish Standalone Executable (win-x64)
+      run: |
+        dotnet publish NayliFashion.Wpf/NayliFashion.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/win-x64
+        Copy-Item -Path "Installer/Install-Shortcut.bat" -Destination "publish/win-x64/" -Force
+
+    - name: Package Setup Zip
+      run: |
+        Compress-Archive -Path "publish/win-x64/*" -DestinationPath "NayliFashion-Setup-v1.0.0-win-x64.zip" -Force
+
+    - name: Upload Setup Artifact to GitHub Actions
+      uses: actions/upload-artifact@v4
+      with:
+        name: NayliFashion-Windows-Setup-v1.0.0
+        path: NayliFashion-Setup-v1.0.0-win-x64.zip
+        if-no-files-found: error
+
+    - name: Publish GitHub Release
+      if: github.ref == 'refs/heads/main'
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v1.0.0
+        name: "Nayli Fashion ERP & POS v1.0.0 (Windows Setup)"
+        body: |
+          ### 👗 Nayli Fashion ERP & POS System v1.0.0
+          الإصدار المستقر الأول لنظام إدارة المبيعات والمخزون والكراء لمحلات الألبسة والأقمشة والأحذية والعطور.
+
+          #### مميزات الإصدار:
+          - ملف تشغيلي وتثبيتي شامل ومستقل (Self-Contained) لا يحتاج لتثبيت أي برامج إضافية.
+          - يشمل سكربت التثبيت السريع `Install-Shortcut.bat` لإنشاء اختصار مباشر على سطح المكتب.
+          - قاعدة بيانات SQLite مدمجة جاهزة للعمل فوراً.
+        files: NayliFashion-Setup-v1.0.0-win-x64.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

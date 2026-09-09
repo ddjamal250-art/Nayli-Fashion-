@@ -1,8 +1,10 @@
-﻿## Build results
+## Build results
 [Bb]in/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+[Pp]ublish/
+*.zip
 
 ## Visual Studio cache & user files
 .vs/
