@@ -159,30 +159,76 @@ public class AuthService : IAuthService
         await context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> ResetUserPasswordAsync(int userId, string newPassword)
+    {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var user = await context.Users.FindAsync(userId);
+        if (user == null) return false;
+
+        DatabaseInitializer.CreatePasswordHash(newPassword, out string hash, out string salt);
+        user.PasswordHash = hash;
+        user.PasswordSalt = salt;
+
+        await context.SaveChangesAsync();
+        return true;
+    }
 }
 
 /// <summary>
-/// تطبيق خدمة النسخ الاحتياطي التلقائي لقاعدة بيانات SQLite لحماية بيانات المحل من الضياع
+/// تطبيق خدمة النسخ الاحتياطي التفاعلي والتلقائي لقاعدة بيانات SQLite مع دعم المسارات المخصصة والفلاش ديسك
 /// </summary>
 public class BackupService : IBackupService
 {
-    private readonly string _databaseFilePath = Path.Combine(@"D:\repos\NayliFashion", "nayli_fashion.db");
-    private readonly string _defaultBackupDirectory = Path.Combine(@"D:\repos\NayliFashion", "Backups");
+    private readonly string _databaseFilePath;
+    private readonly string _defaultBackupDirectory;
 
-    public async Task<string> CreateBackupAsync(string? customDestinationFolder = null)
+    public BackupService(string? databaseFilePath = null, string? defaultBackupDirectory = null)
     {
-        string targetDir = customDestinationFolder ?? _defaultBackupDirectory;
-        Directory.CreateDirectory(targetDir);
+        _databaseFilePath = databaseFilePath ?? Path.Combine(@"D:\repos\NayliFashion", "nayli_fashion.db");
+        _defaultBackupDirectory = defaultBackupDirectory ?? Path.Combine(@"D:\repos\NayliFashion", "Backups");
+    }
 
-        string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
-        string backupFileName = $"NayliFashion_Backup_{timestamp}.db";
-        string backupFilePath = Path.Combine(targetDir, backupFileName);
+    public string GetDatabaseFilePath() => _databaseFilePath;
+    public string GetDefaultBackupDirectory() => _defaultBackupDirectory;
+
+    public async Task<string> CreateBackupAsync(string? customDestinationPath = null)
+    {
+        string targetFilePath;
+
+        if (!string.IsNullOrWhiteSpace(customDestinationPath))
+        {
+            if (customDestinationPath.EndsWith(".db", StringComparison.OrdinalIgnoreCase))
+            {
+                // مسار ملف محدد بالكامل (مثلاً من SaveFileDialog)
+                string? dir = Path.GetDirectoryName(customDestinationPath);
+                if (!string.IsNullOrWhiteSpace(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
+                targetFilePath = customDestinationPath;
+            }
+            else
+            {
+                // مسار مجلد مخصص (مثلاً فلاش ديسك E:\)
+                Directory.CreateDirectory(customDestinationPath);
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                targetFilePath = Path.Combine(customDestinationPath, $"NayliFashion_Backup_{timestamp}.db");
+            }
+        }
+        else
+        {
+            Directory.CreateDirectory(_defaultBackupDirectory);
+            string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+            targetFilePath = Path.Combine(_defaultBackupDirectory, $"NayliFashion_Backup_{timestamp}.db");
+        }
 
         if (File.Exists(_databaseFilePath))
         {
-            // نسخ آمن للملف
-            await Task.Run(() => File.Copy(_databaseFilePath, backupFilePath, true));
-            return backupFilePath;
+            // إغلاق أي اتصالات معلقة لضمان سلامة النسخ
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+            await Task.Run(() => File.Copy(_databaseFilePath, targetFilePath, true));
+            return targetFilePath;
         }
 
         throw new FileNotFoundException("ملف قاعدة البيانات الأصلي غير موجود لنسخه!");
@@ -192,6 +238,15 @@ public class BackupService : IBackupService
     {
         if (!File.Exists(backupFilePath))
             return false;
+
+        // تحرير قفل الملفات لضمان عدم حدوث تصادم مع الاتصالات المفتوحة
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+
+        string? parentDir = Path.GetDirectoryName(_databaseFilePath);
+        if (!string.IsNullOrWhiteSpace(parentDir))
+        {
+            Directory.CreateDirectory(parentDir);
+        }
 
         await Task.Run(() => File.Copy(backupFilePath, _databaseFilePath, true));
         return true;

@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:NayliFashion.Wpf.ViewModels"
         xmlns:views="clr-namespace:NayliFashion.Wpf.Views"
+        xmlns:converters="clr-namespace:NayliFashion.Wpf.Converters"
         mc:Ignorable="d"
         Title="Nayli Fashion - نايل فاشن | نظام إدارة المبيعات والكراء والمخزون"
         Height="850" Width="1350"
@@ -14,8 +15,19 @@
         FlowDirection="RightToLeft"
         Background="{StaticResource BrushBackground}">
 
+    <Window.InputBindings>
+        <KeyBinding Key="L" Modifiers="Control" Command="{Binding LockScreenCommand}" />
+        <KeyBinding Key="F1" Command="{Binding NavigateToPosCommand}" />
+        <KeyBinding Key="F2" Command="{Binding NavigateToInventoryCommand}" />
+        <KeyBinding Key="F3" Command="{Binding NavigateToRentalsCommand}" />
+        <KeyBinding Key="F4" Command="{Binding NavigateToCustomersCommand}" />
+        <KeyBinding Key="F5" Command="{Binding NavigateToFinanceCommand}" />
+        <KeyBinding Key="F6" Command="{Binding NavigateToSettingsCommand}" />
+    </Window.InputBindings>
+
     <!-- ربط كل ViewModel بواجهته المناسبة تلقائياً -->
     <Window.Resources>
+        <converters:BooleanToVisibilityConverter x:Key="BoolToVis" />
         <DataTemplate DataType="{x:Type vm:PosViewModel}">
             <views:PosView />
         </DataTemplate>
@@ -62,8 +74,18 @@
                     </StackPanel>
                 </StackPanel>
 
-                <!-- مؤشرات حالة الوردية والمستخدم النشط -->
+                <!-- مؤشرات حالة الوردية والمستخدم النشط وزر قفل الشاشة -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- زر قفل الشاشة المؤقت (Break Mode) -->
+                    <Button Content="🔒 قفل الشاشة (Ctrl+L)"
+                            Command="{Binding LockScreenCommand}"
+                            Style="{StaticResource SecondaryButton}"
+                            Height="34"
+                            FontSize="12"
+                            Padding="10,0"
+                            Margin="0,0,12,0"
+                            ToolTip="قفل مؤقت للشاشة أثناء الاستراحة أو الصلاة لحماية الصندوق والبيانات" />
+
                     <!-- مؤشر الوردية -->
                     <Border Background="{StaticResource BrushCard}" CornerRadius="8" Padding="12,6" Margin="0,0,12,0" BorderBrush="{StaticResource BrushBorder}" BorderThickness="1">
                         <StackPanel Orientation="Horizontal">
@@ -98,9 +120,9 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <!-- أزرار الأقسام الرئيسية -->
+                    <!-- أزرار الأقسام الرئيسية مع إشارة للاختصارات -->
                     <StackPanel Grid.Row="0">
-                        <Button Content="🛒  نقطة البيع (الكاشير)"
+                        <Button Content="🛒  نقطة البيع [F1]"
                                 Command="{Binding NavigateToPosCommand}"
                                 Style="{StaticResource SecondaryButton}"
                                 HorizontalContentAlignment="Right"
@@ -108,7 +130,7 @@
                                 FontSize="14"
                                 Margin="0,0,0,8" />
 
-                        <Button Content="📦  إدارة المخزون والمعايير"
+                        <Button Content="📦  إدارة المخزون [F2]"
                                 Command="{Binding NavigateToInventoryCommand}"
                                 Style="{StaticResource SecondaryButton}"
                                 HorizontalContentAlignment="Right"
@@ -116,7 +138,7 @@
                                 FontSize="14"
                                 Margin="0,0,0,8" />
 
-                        <Button Content="👗  نظام كراء الأزياء والأفرشة"
+                        <Button Content="👗  كراء الأزياء والأفرشة [F3]"
                                 Command="{Binding NavigateToRentalsCommand}"
                                 Style="{StaticResource SecondaryButton}"
                                 HorizontalContentAlignment="Right"
@@ -124,7 +146,7 @@
                                 FontSize="14"
                                 Margin="0,0,0,8" />
 
-                        <Button Content="👥  العملاء ودفتر الديون"
+                        <Button Content="👥  العملاء والكارني [F4]"
                                 Command="{Binding NavigateToCustomersCommand}"
                                 Style="{StaticResource SecondaryButton}"
                                 HorizontalContentAlignment="Right"
@@ -132,7 +154,7 @@
                                 FontSize="14"
                                 Margin="0,0,0,8" />
 
-                        <Button Content="💰  المالية والصندوق"
+                        <Button Content="💰  المالية والورديات [F5]"
                                 Command="{Binding NavigateToFinanceCommand}"
                                 Style="{StaticResource SecondaryButton}"
                                 HorizontalContentAlignment="Right"
@@ -140,7 +162,7 @@
                                 FontSize="14"
                                 Margin="0,0,0,8" />
 
-                        <Button Content="⚙  إعدادات النظام"
+                        <Button Content="⚙  إعدادات النظام [F6]"
                                 Command="{Binding NavigateToSettingsCommand}"
                                 Style="{StaticResource SecondaryButton}"
                                 HorizontalContentAlignment="Right"
@@ -163,6 +185,64 @@
 
             <!-- الشاشة المعروضة حالياً -->
             <ContentControl Grid.Column="1" Content="{Binding CurrentView}" />
+        </Grid>
+
+        <!-- واجهة قفل الشاشة المؤقتة (Break Lock Overlay) -->
+        <Grid Grid.Row="0" Grid.RowSpan="2"
+              Background="#EE111319"
+              Visibility="{Binding IsScreenLocked, Converter={StaticResource BoolToVis}}">
+            <Border Background="{StaticResource BrushSurface}"
+                    BorderBrush="{StaticResource BrushAccentGold}"
+                    BorderThickness="2"
+                    CornerRadius="16"
+                    Width="440"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Padding="35,40">
+                <StackPanel HorizontalAlignment="Center">
+                    <Border Width="70" Height="70" Background="{StaticResource BrushCard}" CornerRadius="35" BorderBrush="{StaticResource BrushAccentGold}" BorderThickness="2" HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <TextBlock Text="🔒" FontSize="32" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <TextBlock Text="الشاشة مقفلة مؤقتاً" Foreground="{StaticResource BrushAccentGold}" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,0,0,6" />
+                    <TextBlock Text="وضع الاستراحة والصلاة لحماية الصندوق والبيانات" Foreground="{StaticResource BrushTextSecondary}" FontSize="13" HorizontalAlignment="Center" Margin="0,0,0,20" />
+                    
+                    <Border Background="{StaticResource BrushCard}" CornerRadius="8" Padding="14,10" Margin="0,0,0,16">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                            <TextBlock Text="المستخدم النشط: " Foreground="{StaticResource BrushTextMuted}" FontSize="13" />
+                            <TextBlock Text="{Binding CurrentUser.FullName}" Foreground="{StaticResource BrushTextPrimary}" FontWeight="Bold" FontSize="13" />
+                        </StackPanel>
+                    </Border>
+
+                    <TextBlock Text="كلمة المرور لفك القفل:" Foreground="{StaticResource BrushTextSecondary}" FontSize="13" Margin="0,0,0,8" />
+                    <PasswordBox x:Name="LockPasswordBox"
+                                 PasswordChanged="LockPasswordBox_PasswordChanged"
+                                 KeyDown="LockPasswordBox_KeyDown"
+                                 Height="44"
+                                 FontSize="16"
+                                 Background="{StaticResource BrushCard}"
+                                 Foreground="{StaticResource BrushTextPrimary}"
+                                 CaretBrush="{StaticResource BrushAccentGold}"
+                                 BorderBrush="{StaticResource BrushBorder}"
+                                 BorderThickness="1"
+                                 Padding="12,10"
+                                 Margin="0,0,0,12" />
+
+                    <TextBlock Text="{Binding LockErrorMessage}"
+                               Foreground="{StaticResource BrushDanger}"
+                               FontSize="12"
+                               HorizontalAlignment="Center"
+                               Margin="0,0,0,12"
+                               TextWrapping="Wrap" />
+
+                    <Button Content="🔓  استئناف العمل"
+                            Command="{Binding UnlockScreenCommand}"
+                            Style="{StaticResource PrimaryButton}"
+                            Height="44"
+                            FontSize="15"
+                            Width="300"
+                            HorizontalAlignment="Center" />
+                </StackPanel>
+            </Border>
         </Grid>
     </Grid>
 </Window>

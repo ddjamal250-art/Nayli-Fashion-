@@ -30,14 +30,17 @@ public interface IAuthService
     Task<List<User>> GetAllUsersAsync();
     Task<User> CreateUserAsync(string username, string fullName, string password, Core.Enums.UserRole role, string? phone);
     Task<bool> UpdateUserStatusAsync(int userId, bool isActive);
+    Task<bool> ResetUserPasswordAsync(int userId, string newPassword);
 }
 
 /// <summary>
-/// واجهة خدمة النسخ الاحتياطي التلقائي لقاعدة بيانات SQLite
+/// واجهة خدمة النسخ الاحتياطي التلقائي والتفاعلي لقاعدة بيانات SQLite مع دعم المسارات المخصصة والفلاش ديسك
 /// </summary>
 public interface IBackupService
 {
-    Task<string> CreateBackupAsync(string? customDestinationFolder = null);
+    Task<string> CreateBackupAsync(string? customDestinationPath = null);
     Task<bool> RestoreBackupAsync(string backupFilePath);
     List<string> GetAvailableBackups();
+    string GetDatabaseFilePath();
+    string GetDefaultBackupDirectory();
 }

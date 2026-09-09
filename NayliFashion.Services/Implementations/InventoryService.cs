@@ -55,9 +55,23 @@ public class InventoryService : IInventoryService
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             string term = searchTerm.Trim().ToLower();
-            query = query.Where(p => p.Name.ToLower().Contains(term) ||
-                                     (p.CodeSku != null && p.CodeSku.ToLower().Contains(term)) ||
-                                     p.Variants.Any(v => v.Barcode.Contains(term) || v.VariantName.ToLower().Contains(term)));
+            bool isNumeric = decimal.TryParse(term, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out decimal searchNumber) ||
+                             decimal.TryParse(term, out searchNumber);
+
+            query = query.Where(p =>
+                p.Name.ToLower().Contains(term) ||
+                (p.CodeSku != null && p.CodeSku.ToLower().Contains(term)) ||
+                (p.Description != null && p.Description.ToLower().Contains(term)) ||
+                p.Category.Name.ToLower().Contains(term) ||
+                (p.Brand != null && p.Brand.Name.ToLower().Contains(term)) ||
+                p.Variants.Any(v =>
+                    v.Barcode.Contains(term) ||
+                    (v.Sku != null && v.Sku.ToLower().Contains(term)) ||
+                    v.VariantName.ToLower().Contains(term) ||
+                    (v.ColorName != null && v.ColorName.ToLower().Contains(term)) ||
+                    (isNumeric && (v.RetailPrice == searchNumber || v.WholesalePrice == searchNumber || v.RentalDailyRate == searchNumber))
+                )
+            );
         }
 
         return await query.OrderByDescending(p => p.Id).ToListAsync();

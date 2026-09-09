@@ -29,6 +29,47 @@ public partial class MainViewModel : ViewModelBase
     [ObservableProperty]
     private string _activeSectionTitle = "نقطة البيع (الكاشير)";
 
+    // --- وضع قفل الشاشة أثناء الاستراحة (Screen Lock / Break Mode) ---
+    [ObservableProperty]
+    private bool _isScreenLocked;
+
+    [ObservableProperty]
+    private string _unlockPassword = string.Empty;
+
+    [ObservableProperty]
+    private string? _lockErrorMessage;
+
+    [RelayCommand]
+    public void LockScreen()
+    {
+        IsScreenLocked = true;
+        UnlockPassword = string.Empty;
+        LockErrorMessage = null;
+    }
+
+    [RelayCommand]
+    public void UnlockScreen()
+    {
+        if (CurrentUser == null || string.IsNullOrWhiteSpace(UnlockPassword))
+        {
+            LockErrorMessage = "يرجى إدخال كلمة المرور للمتابعة";
+            return;
+        }
+
+        bool isValid = NayliFashion.Data.Seed.DatabaseInitializer.VerifyPassword(UnlockPassword, CurrentUser.PasswordHash, CurrentUser.PasswordSalt);
+        if (isValid)
+        {
+            IsScreenLocked = false;
+            UnlockPassword = string.Empty;
+            LockErrorMessage = null;
+        }
+        else
+        {
+            LockErrorMessage = "كلمة المرور غير صحيحة! يرجى المحاولة مجدداً.";
+            UnlockPassword = string.Empty;
+        }
+    }
+
     public MainViewModel(
         IAuthService authService,
         ICashShiftService cashShiftService,
