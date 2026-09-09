@@ -133,15 +133,11 @@
 
                 <!-- 1. الشعار الرسمي المعتمد والاسم التجاري -->
                 <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,16">
-                    <Border Width="80" Height="80"
-                            Background="#FFFFFF"
-                            CornerRadius="16"
+                    <Border Width="84" Height="84"
+                            Background="Transparent"
                             HorizontalAlignment="Center"
                             Margin="0,0,0,12"
-                            BorderBrush="{StaticResource BrushAccentGold}"
-                            BorderThickness="2"
-                            Padding="6"
-                            ClipToBounds="True">
+                            Padding="2">
                         <Image Source="/Assets/app_logo.png"
                                Stretch="Uniform"
                                RenderOptions.BitmapScalingMode="HighQuality" />
