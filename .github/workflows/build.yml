@@ -1,4 +1,4 @@
-﻿name: Nayli Fashion CI & Automated Setup Release
+name: Nayli Fashion CI & Automated Setup Release
 
 on:
   push:
@@ -37,15 +37,15 @@ jobs:
         dotnet publish NayliFashion.Wpf/NayliFashion.Wpf.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o publish/win-x64
         Copy-Item -Path "Installer/Install-Shortcut.bat" -Destination "publish/win-x64/" -Force
 
-    - name: Package Setup Zip
+    - name: Build Professional Installer (Inno Setup)
       run: |
-        Compress-Archive -Path "publish/win-x64/*" -DestinationPath "NayliFashion-Setup-v1.0.0-win-x64.zip" -Force
+        iscc Installer/NayliFashion-Installer.iss
 
     - name: Upload Setup Artifact to GitHub Actions
       uses: actions/upload-artifact@v4
       with:
         name: NayliFashion-Windows-Setup-v1.0.0
-        path: NayliFashion-Setup-v1.0.0-win-x64.zip
+        path: publish/installer/NayliFashion-Setup-v1.0.0.exe
         if-no-files-found: error
 
     - name: Publish GitHub Release
@@ -62,6 +62,6 @@ jobs:
           - ملف تشغيلي وتثبيتي شامل ومستقل (Self-Contained) لا يحتاج لتثبيت أي برامج إضافية.
           - يشمل سكربت التثبيت السريع `Install-Shortcut.bat` لإنشاء اختصار مباشر على سطح المكتب.
           - قاعدة بيانات SQLite مدمجة جاهزة للعمل فوراً.
-        files: NayliFashion-Setup-v1.0.0-win-x64.zip
+        files: publish/installer/NayliFashion-Setup-v1.0.0.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
