@@ -8,7 +8,7 @@ OutputBaseFilename=NayliFashion-Setup-v1.0.0
 OutputDir=..\publish\installer
 Compression=lzma2/ultra64
 SolidCompression=yes
-SetupIconFile=compiler:SetupClassicIcon.ico
+SetupIconFile=app_icon.ico
 UninstallDisplayIcon={app}\NayliFashion.Wpf.exe
 ArchitecturesInstallIn64BitMode=x64
 

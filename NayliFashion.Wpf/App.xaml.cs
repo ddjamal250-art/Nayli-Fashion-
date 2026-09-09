@@ -71,11 +71,25 @@ public partial class App : Application
         ShowLoginWindow();
     }
 
+    public static string GetAppDirectory()
+    {
+        string devDirectory = @"D:\repos\NayliFashion";
+        if (Directory.Exists(devDirectory))
+        {
+            return devDirectory;
+        }
+
+        string appData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "NayliFashion");
+        Directory.CreateDirectory(appData);
+        return appData;
+    }
+
     private static void LogCrash(Exception ex)
     {
         try
         {
-            string logDir = @"D:\repos\NayliFashion\Logs";
+            string appDir = GetAppDirectory();
+            string logDir = Path.Combine(appDir, "Logs");
             Directory.CreateDirectory(logDir);
             string logFile = Path.Combine(logDir, $"crash_{DateTime.Now:yyyyMMdd}.log");
             string entry = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {ex.GetType().FullName}: {ex.Message}\n{ex.StackTrace}\n---\n";
@@ -89,9 +103,11 @@ public partial class App : Application
 
     private void ConfigureServices(IServiceCollection services)
     {
-        string appDirectory = @"D:\repos\NayliFashion";
+        string appDirectory = GetAppDirectory();
         Directory.CreateDirectory(appDirectory);
         string dbPath = Path.Combine(appDirectory, "nayli_fashion.db");
+        string backupDir = Path.Combine(appDirectory, "Backups");
+        Directory.CreateDirectory(backupDir);
 
         // مصنع سياق قاعدة البيانات الآمن مع معلمات الأداء العالي
         services.AddDbContextFactory<AppDbContext>(options =>
@@ -102,7 +118,7 @@ public partial class App : Application
         // الخدمات والأدوات المساعدة
         services.AddSingleton<IToastNotificationService, ToastNotificationService>();
         services.AddSingleton<IBarcodeService, BarcodeService>();
-        services.AddSingleton<IBackupService, BackupService>();
+        services.AddSingleton<IBackupService>(sp => new BackupService(dbPath, backupDir));
         services.AddSingleton<IAuthService, AuthService>();
         services.AddSingleton<IFileStorageService, FileStorageService>();
         services.AddScoped<IDataMigrationService, DataMigrationService>();

@@ -46,7 +46,8 @@ public class CoreAndServicesTests
 
             var setting = await db.AppSettings.FirstOrDefaultAsync();
             Assert.NotNull(setting);
-            Assert.Contains("Nayli Fashion", setting.StoreName);
+            Assert.Contains("Nayli", setting.StoreName);
+            Assert.Contains("Fashion", setting.StoreName);
 
             var categoriesCount = await db.Categories.CountAsync();
             Assert.True(categoriesCount >= 9);

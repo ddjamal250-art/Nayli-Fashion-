@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:conv="clr-namespace:NayliFashion.Wpf.Converters"
         mc:Ignorable="d"
-        Title="Nayli Fashion - نايل فاشن | تسجيل الدخول للنظام"
+        Title="Nayli Market &amp; Fashion - نايلي ماركت وفاشن | تسجيل الدخول إلى النظام (ERP &amp; POS)"
+        Icon="/Assets/app_icon.ico"
         Height="650" Width="1040"
         MinHeight="600" MinWidth="960"
         WindowStartupLocation="CenterScreen"
@@ -130,39 +131,38 @@
                     <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
 
-                <!-- 1. الشعار والاسم الرسمي -->
-                <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,20">
-                    <Border Width="72" Height="72"
-                            Background="{StaticResource BrushCard}"
-                            CornerRadius="36"
+                <!-- 1. الشعار الرسمي المعتمد والاسم التجاري -->
+                <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,0,0,16">
+                    <Border Width="80" Height="80"
+                            Background="#FFFFFF"
+                            CornerRadius="16"
                             HorizontalAlignment="Center"
-                            Margin="0,0,0,14"
+                            Margin="0,0,0,12"
                             BorderBrush="{StaticResource BrushAccentGold}"
-                            BorderThickness="2">
-                        <TextBlock Text="NF"
-                                   Foreground="{StaticResource BrushAccentGold}"
-                                   FontSize="30"
-                                   FontWeight="Bold"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center" />
+                            BorderThickness="2"
+                            Padding="6"
+                            ClipToBounds="True">
+                        <Image Source="/Assets/app_logo.png"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
                     </Border>
 
-                    <TextBlock Text="Nayli Fashion"
+                    <TextBlock Text="Nayli Market &amp; Fashion"
                                Foreground="{StaticResource BrushAccentGold}"
-                               FontSize="24"
+                               FontSize="22"
                                FontWeight="Bold"
                                HorizontalAlignment="Center" />
 
-                    <TextBlock Text="نايل فاشن - الجلفة"
+                    <TextBlock Text="نايلي ماركت وفاشن - ولاية الجلفة"
                                Foreground="{StaticResource BrushTextPrimary}"
-                               FontSize="16"
+                               FontSize="15"
                                FontWeight="SemiBold"
                                HorizontalAlignment="Center"
                                Margin="0,2,0,0" />
 
-                    <TextBlock Text="نظام إدارة المبيعات، الكراء والمخزون الشامل"
+                    <TextBlock Text="نظام إدارة المبيعات والكراء والمخزون الشامل (ERP &amp; POS)"
                                Foreground="{StaticResource BrushTextMuted}"
-                               FontSize="11"
+                               FontSize="10"
                                HorizontalAlignment="Center"
                                Margin="0,4,0,0" />
                 </StackPanel>
@@ -243,19 +243,19 @@
             <StackPanel Margin="36,28,36,28" VerticalAlignment="Center">
 
                 <!-- العنوان الترحيبي -->
-                <TextBlock Text="تسجيل الدخول للنظام"
+                <TextBlock Text="تسجيل الدخول إلى النظام (System Login)"
                            Foreground="{StaticResource BrushTextPrimary}"
                            FontSize="22"
                            FontWeight="Bold"
                            Margin="0,0,0,4" />
 
-                <TextBlock Text="حدد حساب الموظف وأدخل بيانات الاعتماد للمتابعة:"
+                <TextBlock Text="اختر حساب المستخدم وأدخل بيانات الاعتماد للمتابعة:"
                            Foreground="{StaticResource BrushTextSecondary}"
                            FontSize="13"
                            Margin="0,0,0,14" />
 
                 <!-- التبديل السريع للموظفين (Staff Switcher) -->
-                <TextBlock Text="الموظفون المتاحون (انقر للاختيار السريع):"
+                <TextBlock Text="المستخدمون النشطون (تسجيل دخول سريع):"
                            Foreground="{StaticResource BrushAccentGold}"
                            FontSize="12"
                            FontWeight="SemiBold"
@@ -492,7 +492,7 @@
                     </Grid>
 
                     <!-- زر تسجيل الدخول الرئيسي -->
-                    <Button Content="تسجيل الدخول إلى النظام ➜"
+                    <Button Content="تسجيل الدخول إلى النظام (Sign In) ➜"
                             Command="{Binding LoginCommand}"
                             Style="{StaticResource PrimaryButton}"
                             Height="48"
@@ -551,20 +551,13 @@
                     </Grid>
 
                     <!-- زر تأكيد دخول PIN -->
-                    <Button Content="تأكيد الدخول السريع ➜"
+                    <Button Content="تأكيد الدخول السريع (Confirm PIN) ➜"
                             Command="{Binding LoginCommand}"
                             Style="{StaticResource PrimaryButton}"
                             Height="46"
                             FontSize="14"
                             FontWeight="Bold" />
                 </StackPanel>
-
-                <!-- نص المساعدة -->
-                <TextBlock Text="الحسابات التجريبية: admin / admin123  أو  cashier / 1234"
-                           Foreground="{StaticResource BrushTextMuted}"
-                           FontSize="11"
-                           HorizontalAlignment="Center"
-                           Margin="0,18,0,0" />
             </StackPanel>
         </ScrollViewer>
     </Grid>
