@@ -48,6 +48,61 @@ public enum FootwearSizeEu
 }
 
 /// <summary>
+/// المقاسات الأمريكية للأحذية (US Shoe Sizes)
+/// </summary>
+public enum FootwearSizeUs
+{
+    None = 0,
+    Size4 = 40,
+    Size4_5 = 45,
+    Size5 = 50,
+    Size5_5 = 55,
+    Size6 = 60,
+    Size6_5 = 65,
+    Size7 = 70,
+    Size7_5 = 75,
+    Size8 = 80,
+    Size8_5 = 85,
+    Size9 = 90,
+    Size9_5 = 95,
+    Size10 = 100,
+    Size10_5 = 105,
+    Size11 = 110,
+    Size11_5 = 115,
+    Size12 = 120,
+    Size13 = 130,
+    Size14 = 140
+}
+
+/// <summary>
+/// المقاسات البريطانية للأحذية (UK Shoe Sizes)
+/// </summary>
+public enum FootwearSizeUk
+{
+    None = 0,
+    Size3 = 30,
+    Size3_5 = 35,
+    Size4 = 40,
+    Size4_5 = 45,
+    Size5 = 50,
+    Size5_5 = 55,
+    Size6 = 60,
+    Size6_5 = 65,
+    Size7 = 70,
+    Size7_5 = 75,
+    Size8 = 80,
+    Size8_5 = 85,
+    Size9 = 90,
+    Size9_5 = 95,
+    Size10 = 100,
+    Size10_5 = 105,
+    Size11 = 110,
+    Size11_5 = 115,
+    Size12 = 120,
+    Size13 = 130
+}
+
+/// <summary>
 /// الفئة المستهدفة للأحذية
 /// </summary>
 public enum FootwearGender

@@ -30,13 +30,16 @@ public class ReceiptPrinterService : IReceiptPrinterService
 
         string receiptText = GenerateSaleReceiptText(invoice, setting);
 
-        // حفظ صورة الإيصال في مجلد الإيصالات المحلي للأرشفة والمعاينة السريعة
+        // 1. حفظ صورة الإيصال في مجلد الإيصالات المحلي للأرشفة والمعاينة السريعة
         string receiptsDir = Path.Combine(@"D:\repos\NayliFashion", "Receipts");
         Directory.CreateDirectory(receiptsDir);
         string filePath = Path.Combine(receiptsDir, $"{invoice.InvoiceNumber}.txt");
         await File.WriteAllTextAsync(filePath, receiptText, Encoding.UTF8);
 
-        // فتح درج النقود تلقائياً بعد البيع إذا كان مفعلاً
+        // 2. الطباعة المباشرة عبر أوامر ESC/POS إلى الطابعة الحرارية
+        await PrintRawTicketAsync(receiptText, setting);
+
+        // 3. فتح درج النقود تلقائياً بعد البيع إذا كان مفعلاً
         if (setting?.AutoOpenCashDrawerOnPrint == true)
         {
             await OpenCashDrawerAsync();
@@ -79,6 +82,8 @@ public class ReceiptPrinterService : IReceiptPrinterService
         string filePath = Path.Combine(receiptsDir, $"{order.ContractNumber}.txt");
         await File.WriteAllTextAsync(filePath, sb.ToString(), Encoding.UTF8);
 
+        await PrintRawTicketAsync(sb.ToString(), setting);
+
         return true;
     }
 
@@ -111,11 +116,16 @@ public class ReceiptPrinterService : IReceiptPrinterService
         string filePath = Path.Combine(receiptsDir, $"{transaction.ReferenceNumber}.txt");
         await File.WriteAllTextAsync(filePath, sb.ToString(), Encoding.UTF8);
 
+        await PrintRawTicketAsync(sb.ToString(), setting);
+
         return true;
     }
 
     public async Task<bool> PrintZReportAsync(ZReportDto z)
     {
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var setting = await context.AppSettings.FirstOrDefaultAsync();
+
         var sb = new StringBuilder();
         sb.AppendLine("========================================");
         sb.AppendLine("         تقرير Z اليومي لإغلاق الصندوق     ");
@@ -145,15 +155,66 @@ public class ReceiptPrinterService : IReceiptPrinterService
         string filePath = Path.Combine(receiptsDir, $"Z_{z.ShiftNumber}.txt");
         await File.WriteAllTextAsync(filePath, sb.ToString(), Encoding.UTF8);
 
+        await PrintRawTicketAsync(sb.ToString(), setting);
+
         return true;
     }
 
-    public Task<bool> OpenCashDrawerAsync()
+    public async Task<bool> OpenCashDrawerAsync()
     {
-        // أمر فتح الدرج القياسي لطابعات ESC/POS: ESC p 0 25 250
+        // أمر فتح الدرج القياسي لطابعات ESC/POS: ESC p 0 25 250 (0x1B, 0x70, 0x00, 0x19, 0xFA)
         byte[] drawerKickCommand = new byte[] { 27, 112, 0, 25, 250 };
-        // عند الاتصال بطابعة حقيقية، يتم إرسال هذا المخطط الثنائي لمنفذ الطابعة
-        return Task.FromResult(true);
+        
+        using var context = await _contextFactory.CreateDbContextAsync();
+        var setting = await context.AppSettings.FirstOrDefaultAsync();
+
+        if (!string.IsNullOrWhiteSpace(setting?.ThermalPrinterName))
+        {
+            RawPrinterHelper.SendBytesToPrinter(setting.ThermalPrinterName, drawerKickCommand);
+        }
+
+        return true;
+    }
+
+    private Task<bool> PrintRawTicketAsync(string text, NayliFashion.Core.Models.System.AppSetting? setting)
+    {
+        if (string.IsNullOrWhiteSpace(setting?.ThermalPrinterName) || string.IsNullOrWhiteSpace(text))
+            return Task.FromResult(false);
+
+        try
+        {
+            var printBytes = new List<byte>();
+            // تهيئة الطابعة: ESC @
+            printBytes.AddRange(new byte[] { 27, 64 });
+
+            // ضبط المحاذاة للوسط: ESC a 1
+            printBytes.AddRange(new byte[] { 27, 97, 1 });
+
+            // الترميز
+            Encoding encoding;
+            try
+            {
+                Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+                encoding = Encoding.GetEncoding(1256); // Arabic Windows-1256
+            }
+            catch
+            {
+                encoding = Encoding.UTF8;
+            }
+
+            printBytes.AddRange(encoding.GetBytes(text));
+            printBytes.AddRange(new byte[] { 10, 10, 10, 10 }); // أسطر فارغة
+
+            // قص الورق الجزئي: GS V 66 0
+            printBytes.AddRange(new byte[] { 29, 86, 66, 0 });
+
+            bool result = RawPrinterHelper.SendBytesToPrinter(setting.ThermalPrinterName, printBytes.ToArray());
+            return Task.FromResult(result);
+        }
+        catch
+        {
+            return Task.FromResult(false);
+        }
     }
 
     private string GenerateSaleReceiptText(SaleInvoice invoice, NayliFashion.Core.Models.System.AppSetting? setting)

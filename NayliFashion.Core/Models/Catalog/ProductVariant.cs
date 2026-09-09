@@ -21,6 +21,9 @@ public class ProductVariant : BaseEntity
     public ApparelStandardSize ApparelSize { get; set; } = ApparelStandardSize.None;
     public ApparelNumericSize NumericSize { get; set; } = ApparelNumericSize.None;
     public FootwearSizeEu ShoeSizeEu { get; set; } = FootwearSizeEu.None;
+    public FootwearSizeUs ShoeSizeUs { get; set; } = FootwearSizeUs.None;
+    public FootwearSizeUk ShoeSizeUk { get; set; } = FootwearSizeUk.None;
+    public string? CustomSize { get; set; }                 // مقاس مخصص (نص حر)
 
     // --- معايير أقمشة وأثواب الصلاة (المقاس المزدوج) ---
     public QamisLength QamisLength { get; set; } = QamisLength.None;

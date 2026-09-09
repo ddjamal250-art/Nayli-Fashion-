@@ -5,9 +5,11 @@ using NayliFashion.Core.Enums;
 using NayliFashion.Core.Models.Catalog;
 using NayliFashion.Core.Models.Customers;
 using NayliFashion.Core.Models.Finance;
+using NayliFashion.Core.Models.Rentals;
 using NayliFashion.Services.DTOs;
 using NayliFashion.Services.Helpers;
 using NayliFashion.Services.Interfaces;
+using NayliFashion.Wpf.Services;
 
 namespace NayliFashion.Wpf.ViewModels;
 
@@ -22,6 +24,15 @@ public partial class PosViewModel : ViewModelBase
     private readonly ICashShiftService _cashShiftService;
     private readonly IReceiptPrinterService _printerService;
     private readonly IAuthService _authService;
+    private readonly IToastNotificationService _toastService;
+    private readonly IRentalService _rentalService;
+
+    public event Action? RequestBarcodeFocus;
+
+    public void TriggerBarcodeFocus()
+    {
+        RequestBarcodeFocus?.Invoke();
+    }
 
     // الفئات وقائمة الأصناف المعروضة
     [ObservableProperty]
@@ -97,13 +108,31 @@ public partial class PosViewModel : ViewModelBase
     [ObservableProperty]
     private ObservableCollection<ProductVariant> _dialogVariants = new();
 
+    // نافذة إرجاع الكراء المباشرة من شاشة الكاشير
+    [ObservableProperty]
+    private bool _isRentalReturnDialogVisible;
+
+    [ObservableProperty]
+    private ObservableCollection<RentalOrder> _activeRentalOrders = new();
+
+    [ObservableProperty]
+    private RentalOrder? _selectedRentalOrder;
+
+    [ObservableProperty]
+    private decimal _damageDeductionDzd;
+
+    [ObservableProperty]
+    private decimal _refundableDepositDzd;
+
     public PosViewModel(
         IPosService posService,
         IInventoryService inventoryService,
         ICustomerService customerService,
         ICashShiftService cashShiftService,
         IReceiptPrinterService printerService,
-        IAuthService authService)
+        IAuthService authService,
+        IToastNotificationService toastService,
+        IRentalService rentalService)
     {
         _posService = posService;
         _inventoryService = inventoryService;
@@ -111,6 +140,8 @@ public partial class PosViewModel : ViewModelBase
         _cashShiftService = cashShiftService;
         _printerService = printerService;
         _authService = authService;
+        _toastService = toastService;
+        _rentalService = rentalService;
     }
 
     public async Task InitializeAsync()
@@ -200,14 +231,24 @@ public partial class PosViewModel : ViewModelBase
         string barcode = ScannedBarcode.Trim();
         ScannedBarcode = string.Empty;
 
-        var variant = await _inventoryService.GetVariantByBarcodeAsync(barcode);
+        await ProcessBarcodeDirectAsync(barcode);
+    }
+
+    public async Task ProcessBarcodeDirectAsync(string barcode)
+    {
+        if (string.IsNullOrWhiteSpace(barcode)) return;
+
+        var variant = await _inventoryService.GetVariantByBarcodeAsync(barcode.Trim());
         if (variant == null)
         {
-            ErrorMessage = $"الباركود ({barcode}) غير معرف في النظام!";
+            _toastService.ShowWarning($"الباركود ({barcode}) غير معرف في النظام!");
+            TriggerBarcodeFocus();
             return;
         }
 
         AddVariantToCart(variant);
+        _toastService.ShowSuccess($"تمت إضافة: {variant.VariantName} للسلة");
+        TriggerBarcodeFocus();
     }
 
     [RelayCommand]
@@ -400,6 +441,7 @@ public partial class PosViewModel : ViewModelBase
             if (result.IsSuccess)
             {
                 SuccessMessage = $"تم حفظ الفاتورة بنجاح برقم ({result.InvoiceNumber})!";
+                _toastService.ShowSuccess($"تم حفظ الفاتورة بنجاح برقم ({result.InvoiceNumber}) ومجموع {result.TotalAmountDzd:N0} دج");
 
                 // طباعة الإيصال الحراري
                 if (result.InvoiceId.HasValue)
@@ -413,19 +455,132 @@ public partial class PosViewModel : ViewModelBase
 
                 // مسح السلة بعد نجاح العملية
                 ClearCart();
+                TriggerBarcodeFocus();
             }
             else
             {
                 ErrorMessage = result.Message;
+                _toastService.ShowError(result.Message);
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = $"حدث خطأ غير متوقع: {ex.Message}";
+            _toastService.ShowError($"حدث خطأ: {ex.Message}");
         }
         finally
         {
             IsBusy = false;
         }
+    }
+
+    [RelayCommand]
+    private async Task OpenCashDrawerAsync()
+    {
+        await _printerService.OpenCashDrawerAsync();
+        _toastService.ShowSuccess("تم إرسال أمر فتح درج النقود [F12]");
+        TriggerBarcodeFocus();
+    }
+
+    [RelayCommand]
+    private async Task OpenRentalReturnDialogAsync()
+    {
+        IsBusy = true;
+        BusyMessage = "جاري تحميل عقود الكراء النشطة...";
+        try
+        {
+            var activeOrders = await _rentalService.GetActiveRentalsAsync();
+            ActiveRentalOrders = new ObservableCollection<RentalOrder>(activeOrders);
+            if (ActiveRentalOrders.Any())
+            {
+                SelectedRentalOrder = ActiveRentalOrders.First();
+                RefundableDepositDzd = SelectedRentalOrder.SecurityDepositCashDzd;
+            }
+            IsRentalReturnDialogVisible = true;
+        }
+        catch (Exception ex)
+        {
+            _toastService.ShowError($"فشل تحميل عقود الكراء: {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    partial void OnSelectedRentalOrderChanged(RentalOrder? value)
+    {
+        if (value != null)
+        {
+            RefundableDepositDzd = Math.Max(0m, value.SecurityDepositCashDzd - DamageDeductionDzd);
+        }
+    }
+
+    partial void OnDamageDeductionDzdChanged(decimal value)
+    {
+        if (SelectedRentalOrder != null)
+        {
+            RefundableDepositDzd = Math.Max(0m, SelectedRentalOrder.SecurityDepositCashDzd - value);
+        }
+    }
+
+    [RelayCommand]
+    private async Task ConfirmRentalReturnAsync()
+    {
+        if (SelectedRentalOrder == null)
+        {
+            _toastService.ShowWarning("يرجى اختيار عقد الكراء المراد إرجاعه!");
+            return;
+        }
+
+        var user = _authService.CurrentUser;
+        if (user == null)
+        {
+            _toastService.ShowError("يجب تسجيل الدخول لتسوية إرجاع الكراء!");
+            return;
+        }
+
+        IsBusy = true;
+        BusyMessage = "جاري تأكيد إرجاع قطع الكراء والتسوية المالية...";
+
+        try
+        {
+            var returnInspection = new RentalReturnInspectionDto
+            {
+                RentalOrderId = SelectedRentalOrder.Id,
+                CashierUserId = user.Id,
+                ActiveCashShiftId = ActiveShift?.Id,
+                ActualReturnDate = DateTime.UtcNow,
+                AdditionalDamageCostDzd = DamageDeductionDzd,
+                ReturnGuaranteeDocumentToCustomer = true,
+                ReturnedItems = SelectedRentalOrder.RentalItems.Select(ri => new RentalItemReturnStateDto
+                {
+                    RentalItemId = ri.Id,
+                    ConditionAtReturn = DamageDeductionDzd > 0 ? ItemConditionGrade.DamagedRequiresRepair : ItemConditionGrade.GoodMinorWear,
+                    SendDirectlyToDryCleaning = true
+                }).ToList()
+            };
+
+            var returnedOrder = await _rentalService.ProcessReturnInspectionAsync(returnInspection);
+            _toastService.ShowSuccess($"تم تسجيل إرجاع عقد الكراء ({returnedOrder.ContractNumber}) بنجاح وإعادة وثيقة الضمان للعميل!");
+
+            IsRentalReturnDialogVisible = false;
+            TriggerBarcodeFocus();
+        }
+        catch (Exception ex)
+        {
+            _toastService.ShowError($"فشل تسوية إرجاع الكراء: {ex.Message}");
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private void CloseRentalReturnDialog()
+    {
+        IsRentalReturnDialogVisible = false;
+        TriggerBarcodeFocus();
     }
 }

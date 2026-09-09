@@ -6,6 +6,7 @@ using NayliFashion.Data.Context;
 using NayliFashion.Data.Seed;
 using NayliFashion.Services.Implementations;
 using NayliFashion.Services.Interfaces;
+using NayliFashion.Wpf.Services;
 using NayliFashion.Wpf.ViewModels;
 using NayliFashion.Wpf.Views;
 
@@ -99,9 +100,11 @@ public partial class App : Application
         });
 
         // الخدمات والأدوات المساعدة
+        services.AddSingleton<IToastNotificationService, ToastNotificationService>();
         services.AddSingleton<IBarcodeService, BarcodeService>();
         services.AddSingleton<IBackupService, BackupService>();
         services.AddSingleton<IAuthService, AuthService>();
+        services.AddSingleton<IFileStorageService, FileStorageService>();
         services.AddScoped<IDataMigrationService, DataMigrationService>();
         services.AddScoped<IReceiptPrinterService, ReceiptPrinterService>();
         services.AddScoped<IInventoryService, InventoryService>();
@@ -118,6 +121,27 @@ public partial class App : Application
         services.AddTransient<CustomersViewModel>();
         services.AddTransient<FinanceViewModel>();
         services.AddTransient<SettingsViewModel>();
+    }
+
+    protected override async void OnExit(ExitEventArgs e)
+    {
+        try
+        {
+            if (_serviceProvider != null)
+            {
+                var backupService = _serviceProvider.GetService<IBackupService>();
+                if (backupService != null)
+                {
+                    await backupService.CreateBackupAsync();
+                }
+            }
+        }
+        catch
+        {
+            // صامت عند الإغلاق لمنع اعتراض عملية الخروج
+        }
+
+        base.OnExit(e);
     }
 
     private void ShowLoginWindow()
@@ -155,6 +179,9 @@ public partial class App : Application
         {
             DataContext = mainVm
         };
+
+        var toastService = _serviceProvider!.GetRequiredService<IToastNotificationService>();
+        _mainWindow.InitializeToastService(toastService);
 
         _mainWindow.Show();
         _ = mainVm.InitializeAsync();
